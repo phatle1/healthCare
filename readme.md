@@ -10,7 +10,7 @@ A simple healthcare appointment management demo built with plain HTML, CSS, and 
   - Stats overview (total / upcoming / completed / cancelled)
   - Book a new appointment
   - Doctor directory
-  - Appointment list with search, status filter, and cancel action
+  - Appointment list with search, status filter, and cancel action 'check check'
 
 ## Running locally
 
