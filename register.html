@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MediCare Portal | Register</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="login-body">
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="brand">
+        <span class="brand-icon">&#10084;</span>
+        <h1>MediCare Portal</h1>
+        <p>Create a new account</p>
+      </div>
+
+      <form id="registerForm" class="login-form">
+        <div class="field">
+          <label for="newUsername">Username</label>
+          <input type="text" id="newUsername" placeholder="Choose a username" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="newPassword">Password</label>
+          <input type="password" id="newPassword" placeholder="Choose a password" autocomplete="new-password" required minlength="4">
+        </div>
+        <div class="field">
+          <label for="confirmPassword">Confirm Password</label>
+          <input type="password" id="confirmPassword" placeholder="Re-enter password" autocomplete="new-password" required minlength="4">
+        </div>
+        <p id="registerError" class="error-msg" hidden></p>
+        <p id="registerSuccess" class="success-msg" hidden>Account created! Redirecting to login...</p>
+        <button type="submit" class="btn btn-primary btn-block">Register</button>
+      </form>
+
+      <p class="switch-link">Already have an account? <a href="index.html">Sign in</a></p>
+    </div>
+  </div>
+
+  <script src="js/users.js"></script>
+  <script src="js/register.js"></script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MediCare Portal | Login</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="login-body">
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="brand">
+        <span class="brand-icon">&#10084;</span>
+        <h1>MediCare Portal</h1>
+        <p>Healthcare Appointment Management</p>
+      </div>
+
+      <form id="loginForm" class="login-form">
+        <div class="field">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" placeholder="Enter username" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Enter password" autocomplete="current-password" required>
+        </div>
+        <p id="loginError" class="error-msg" hidden>Invalid username or password.</p>
+        <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+      </form>
+
+      <div class="login-hint">
+        Demo credentials: <strong>admin</strong> / <strong>admin</strong>
+      </div>
+
+      <p class="switch-link">Don't have an account? <a href="register.html">Register here</a></p>
+    </div>
+  </div>
+
+  <script src="js/users.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>
