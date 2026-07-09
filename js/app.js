@@ -27,6 +27,10 @@
   }
 
   let appointments = loadAppointments();
+  let sortState = {
+    key: "date",
+    direction: "desc",
+  };
 
   // ---------- Feature: Stats overview ----------
   function renderStats() {
@@ -95,6 +99,30 @@
   });
 
   // ---------- Feature: Appointment list with search/filter/cancel ----------
+  function getSortValue(appt, key) {
+    const doc = doctorById(appt.doctorId) || { name: "Unknown", specialty: "-" };
+    const values = {
+      patient: appt.patient,
+      doctor: doc.name,
+      specialty: doc.specialty,
+      date: appt.date,
+      time: appt.time,
+      status: appt.status,
+    };
+
+    return values[key] || "";
+  }
+
+  function updateSortHeaders() {
+    document.querySelectorAll(".sort-header").forEach(function (button) {
+      const isActive = button.getAttribute("data-sort-key") === sortState.key;
+      const indicator = button.querySelector(".sort-indicator");
+      button.classList.toggle("active", isActive);
+      button.setAttribute("aria-sort", isActive ? (sortState.direction === "asc" ? "ascending" : "descending") : "none");
+      indicator.textContent = isActive ? (sortState.direction === "asc" ? "▲" : "▼") : "";
+    });
+  }
+
   function renderTable() {
     const searchTerm = document.getElementById("searchInput").value.trim().toLowerCase();
     const statusFilter = document.getElementById("filterStatus").value;
@@ -109,7 +137,12 @@
         const matchesStatus = statusFilter === "all" || appt.status === statusFilter;
         return matchesSearch && matchesStatus;
       })
-      .sort(function (a, b) { return (a.date + a.time) < (b.date + b.time) ? 1 : -1; });
+      .sort(function (a, b) {
+        const valueA = (getSortValue(a, sortState.key) + (sortState.key === "date" ? a.time : "")).toLowerCase();
+        const valueB = (getSortValue(b, sortState.key) + (sortState.key === "date" ? b.time : "")).toLowerCase();
+        const comparison = valueA.localeCompare(valueB, undefined, { numeric: true, sensitivity: "base" });
+        return sortState.direction === "asc" ? comparison : comparison * -1;
+      });
 
     const tbody = document.getElementById("apptTableBody");
     const noResults = document.getElementById("noResults");
@@ -156,6 +189,21 @@
 
   document.getElementById("searchInput").addEventListener("input", renderTable);
   document.getElementById("filterStatus").addEventListener("change", renderTable);
+  document.querySelectorAll(".sort-header").forEach(function (button) {
+    button.addEventListener("click", function () {
+      const key = button.getAttribute("data-sort-key");
+
+      if (sortState.key === key) {
+        sortState.direction = sortState.direction === "asc" ? "desc" : "asc";
+      } else {
+        sortState.key = key;
+        sortState.direction = "asc";
+      }
+
+      updateSortHeaders();
+      renderTable();
+    });
+  });
 
   function renderAll() {
     renderStats();
@@ -164,5 +212,6 @@
 
   populateDoctorSelect();
   renderDoctors();
+  updateSortHeaders();
   renderAll();
 })();

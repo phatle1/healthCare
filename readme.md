@@ -21,3 +21,24 @@ python3 -m http.server 8000
 ```
 
 Then open `http://localhost:8000/index.html`.
+
+
+
+
+# Healthcare Appointment System
+
+## 🎯 Project Goal
+A simple project for study, focused on building a foundational appointment system.
+
+## 🏥 Key Features
+- Patient appointment booking functionality.
+
+## 🛠️ Technical Stack
+- Frontend: HTML, CSS, JavaScript (Future consideration: React)
+
+## 📂 Project Structure
+- `appointments.html`: Appointment viewing/management.
+- `index.html`: Main entry point.
+- `register.html`: Registration page.
+- `css/style.css`: Styling.
+- `js/*.js`: Application logic (app.js, auth.js, data.js, guard.js, register.js, users.js).

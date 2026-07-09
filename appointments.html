@@ -49,7 +49,7 @@
         <form id="bookForm" class="book-form">
           <div class="field">
             <label for="patientName">Patient Name</label>
-            <input type="text" id="patientName" placeholder="e.g. John Smith" required>
+            <input type="text" id="patientName" placeholder="e.g. John Smith" required pattern="[A-Za-z\s]{4,100}$" title="Name must be between 4 and 100 characters and contain only letters and spaces.">
           </div>
           <div class="field">
             <label for="doctorSelect">Doctor</label>
@@ -86,7 +86,7 @@
       <div class="panel-header">
         <h2>All Appointments</h2>
         <div class="filters">
-          <input type="text" id="searchInput" placeholder="Search patient or doctor...">
+          <input type="text" id="searchInput" class="search-input" placeholder="Search patient or doctor...">
           <select id="filterStatus">
             <option value="all">All Statuses</option>
             <option value="Upcoming">Upcoming</option>
@@ -99,12 +99,12 @@
         <table class="appt-table">
           <thead>
             <tr>
-              <th>Patient</th>
-              <th>Doctor</th>
-              <th>Specialty</th>
-              <th>Date</th>
-              <th>Time</th>
-              <th>Status</th>
+              <th><button type="button" class="sort-header" data-sort-key="patient">Patient <span class="sort-indicator" aria-hidden="true"></span></button></th>
+              <th><button type="button" class="sort-header" data-sort-key="doctor">Doctor <span class="sort-indicator" aria-hidden="true"></span></button></th>
+              <th><button type="button" class="sort-header" data-sort-key="specialty">Specialty <span class="sort-indicator" aria-hidden="true"></span></button></th>
+              <th><button type="button" class="sort-header active" data-sort-key="date">Date <span class="sort-indicator" aria-hidden="true">▼</span></button></th>
+              <th><button type="button" class="sort-header" data-sort-key="time">Time <span class="sort-indicator" aria-hidden="true"></span></button></th>
+              <th><button type="button" class="sort-header" data-sort-key="status">Status <span class="sort-indicator" aria-hidden="true"></span></button></th>
               <th>Actions</th>
             </tr>
           </thead>
