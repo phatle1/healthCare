@@ -31,6 +31,38 @@
     key: "date",
     direction: "desc",
   };
+  const PAGE_SIZE = 5;
+  let currentPage = 1;
+  const appointmentDetailsDialog = document.getElementById("appointmentDetailsDialog");
+  const appointmentDetailsContent = document.getElementById("appointmentDetailsContent");
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, function (character) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[character];
+    });
+  }
+
+  function showAppointmentDetails(appt) {
+    const doctor = doctorById(appt.doctorId) || { name: "Unknown doctor", specialty: "-" };
+    appointmentDetailsContent.innerHTML =
+      '<dl class="appointment-details-list">' +
+        "<div><dt>Patient</dt><dd>" + escapeHtml(appt.patient) + "</dd></div>" +
+        "<div><dt>Doctor</dt><dd>" + escapeHtml(doctor.name) + "</dd></div>" +
+        "<div><dt>Specialty</dt><dd>" + escapeHtml(doctor.specialty) + "</dd></div>" +
+        "<div><dt>Date</dt><dd>" + escapeHtml(appt.date) + "</dd></div>" +
+        "<div><dt>Time</dt><dd>" + escapeHtml(appt.time) + "</dd></div>" +
+        "<div><dt>Status</dt><dd>" + escapeHtml(appt.status) + "</dd></div>" +
+        "<div><dt>Reason for Visit</dt><dd>" + escapeHtml(appt.reason) + "</dd></div>" +
+      "</dl>";
+    appointmentDetailsDialog.showModal();
+  }
+
+  document.getElementById("closeAppointmentDetails").addEventListener("click", function () {
+    appointmentDetailsDialog.close();
+  });
+  appointmentDetailsDialog.addEventListener("click", function (event) {
+    if (event.target === appointmentDetailsDialog) appointmentDetailsDialog.close();
+  });
 
   // ---------- Feature: Stats overview ----------
   function renderStats() {
@@ -61,6 +93,36 @@
     }).join("");
   }
 
+  function renderTodaysAppointments() {
+    const container = document.getElementById("todayAppointments");
+    const today = formatLocalDate(new Date());
+    const todaysAppointments = appointments
+      .filter(function (appt) {
+        return appt.date === today && appt.status === "Upcoming";
+      })
+      .sort(function (a, b) {
+        return a.time.localeCompare(b.time);
+      });
+
+    if (todaysAppointments.length === 0) {
+      container.innerHTML = '<p class="today-empty">No upcoming appointments today.</p>';
+      return;
+    }
+
+    container.innerHTML = todaysAppointments.map(function (appt) {
+      const doctor = doctorById(appt.doctorId) || { name: "Unknown doctor", specialty: "" };
+      return (
+        '<article class="today-appointment">' +
+          '<time class="today-time" datetime="' + appt.date + "T" + appt.time + '">' + appt.time + "</time>" +
+          '<div class="today-details">' +
+            '<strong>' + appt.patient + "</strong>" +
+            "<span>" + doctor.name + (doctor.specialty ? " · " + doctor.specialty : "") + "</span>" +
+          "</div>" +
+        "</article>"
+      );
+    }).join("");
+  }
+
   function populateDoctorSelect() {
     const select = document.getElementById("doctorSelect");
     select.innerHTML = DOCTORS.map(function (doc) {
@@ -69,6 +131,42 @@
   }
 
   // ---------- Feature: Book appointment ----------
+  const patientNameInput = document.getElementById("patientName");
+  const appointmentDateInput = document.getElementById("apptDate");
+  const appointmentTimeInput = document.getElementById("apptTime");
+
+  function formatLocalDate(date) {
+    return date.getFullYear() + "-" +
+      String(date.getMonth() + 1).padStart(2, "0") + "-" +
+      String(date.getDate()).padStart(2, "0");
+  }
+
+  function updateAppointmentTimeMin() {
+    const now = new Date();
+    const today = formatLocalDate(now);
+    appointmentDateInput.min = today;
+
+    if (appointmentDateInput.value === today) {
+      now.setMinutes(now.getMinutes() + 1, 0, 0);
+      appointmentTimeInput.min = now.getHours().toString().padStart(2, "0") + ":" +
+        now.getMinutes().toString().padStart(2, "0");
+    } else {
+      appointmentTimeInput.removeAttribute("min");
+    }
+  }
+
+  updateAppointmentTimeMin();
+  appointmentDateInput.addEventListener("change", function () {
+    appointmentTimeInput.setCustomValidity("");
+    updateAppointmentTimeMin();
+  });
+  appointmentTimeInput.addEventListener("input", function () {
+    this.setCustomValidity("");
+  });
+  patientNameInput.addEventListener("input", function () {
+    this.value = this.value.replace(/[^A-Za-z\s]/g, "");
+  });
+
   document.getElementById("bookForm").addEventListener("submit", function (e) {
     e.preventDefault();
     const patient = document.getElementById("patientName").value.trim();
@@ -77,7 +175,13 @@
     const time = document.getElementById("apptTime").value;
     const reason = document.getElementById("apptReason").value.trim();
 
-    if (!patient || !doctorId || !date || !time) return;
+    if (!/^[A-Za-z\s]{4,100}$/.test(patient) || !doctorId || !date || !time || reason.length > 500) return;
+    if (new Date(date + "T" + time) < new Date()) {
+      appointmentTimeInput.setCustomValidity("Appointment date and time cannot be in the past.");
+      appointmentTimeInput.reportValidity();
+      return;
+    }
+    appointmentTimeInput.setCustomValidity("");
 
     appointments.unshift({
       id: "a" + Date.now(),
@@ -90,9 +194,11 @@
     });
 
     saveAppointments(appointments);
+    currentPage = 1;
     renderAll();
 
     e.target.reset();
+    updateAppointmentTimeMin();
     const successMsg = document.getElementById("bookSuccess");
     successMsg.hidden = false;
     setTimeout(function () { successMsg.hidden = true; }, 2500);
@@ -123,8 +229,33 @@
     });
   }
 
+  function renderPagination(totalRows) {
+    const pagination = document.getElementById("appointmentPagination");
+    const totalPages = Math.ceil(totalRows / PAGE_SIZE);
+
+    if (totalPages <= 1) {
+      pagination.hidden = true;
+      pagination.innerHTML = "";
+      return;
+    }
+
+    pagination.hidden = false;
+    pagination.innerHTML =
+      '<button type="button" class="btn btn-small" data-page="previous"' + (currentPage === 1 ? " disabled" : "") + '>Previous</button>' +
+      '<span class="pagination-summary" aria-live="polite">Page ' + currentPage + " of " + totalPages + "</span>" +
+      '<button type="button" class="btn btn-small" data-page="next"' + (currentPage === totalPages ? " disabled" : "") + '>Next</button>';
+
+    pagination.querySelectorAll("[data-page]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        currentPage += button.getAttribute("data-page") === "next" ? 1 : -1;
+        renderTable();
+      });
+    });
+  }
+
   function renderTable() {
     const searchTerm = document.getElementById("searchInput").value.trim().toLowerCase();
+    const dateFilter = document.getElementById("filterDate").value;
     const statusFilter = document.getElementById("filterStatus").value;
 
     const rows = appointments
@@ -134,8 +265,9 @@
           !searchTerm ||
           appt.patient.toLowerCase().includes(searchTerm) ||
           (doc && doc.name.toLowerCase().includes(searchTerm));
+        const matchesDate = !dateFilter || appt.date === dateFilter;
         const matchesStatus = statusFilter === "all" || appt.status === statusFilter;
-        return matchesSearch && matchesStatus;
+        return matchesSearch && matchesDate && matchesStatus;
       })
       .sort(function (a, b) {
         const valueA = (getSortValue(a, sortState.key) + (sortState.key === "date" ? a.time : "")).toLowerCase();
@@ -150,11 +282,17 @@
     if (rows.length === 0) {
       tbody.innerHTML = "";
       noResults.hidden = false;
+      renderPagination(0);
       return;
     }
     noResults.hidden = true;
 
-    tbody.innerHTML = rows.map(function (appt) {
+    const totalPages = Math.ceil(rows.length / PAGE_SIZE);
+    currentPage = Math.min(currentPage, totalPages);
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const pageRows = rows.slice(startIndex, startIndex + PAGE_SIZE);
+
+    tbody.innerHTML = pageRows.map(function (appt) {
       const doc = doctorById(appt.doctorId) || { name: "Unknown", specialty: "-" };
       const canCancel = appt.status === "Upcoming";
       return (
@@ -168,7 +306,7 @@
           "<td>" +
             (canCancel
               ? '<button class="btn btn-small btn-danger" data-cancel-id="' + appt.id + '">Cancel</button>'
-              : '<button class="btn btn-small btn-disabled" disabled>-</button>') +
+              : '<button type="button" class="btn btn-small btn-details" data-details-id="' + appt.id + '">View Details</button>') +
           "</td>" +
         "</tr>"
       );
@@ -185,10 +323,31 @@
         }
       });
     });
+
+    tbody.querySelectorAll("[data-details-id]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const appt = appointments.find(function (item) {
+          return item.id === btn.getAttribute("data-details-id");
+        });
+        if (appt) showAppointmentDetails(appt);
+      });
+    });
+
+    renderPagination(rows.length);
   }
 
-  document.getElementById("searchInput").addEventListener("input", renderTable);
-  document.getElementById("filterStatus").addEventListener("change", renderTable);
+  document.getElementById("searchInput").addEventListener("input", function () {
+    currentPage = 1;
+    renderTable();
+  });
+  document.getElementById("filterStatus").addEventListener("change", function () {
+    currentPage = 1;
+    renderTable();
+  });
+  document.getElementById("filterDate").addEventListener("change", function () {
+    currentPage = 1;
+    renderTable();
+  });
   document.querySelectorAll(".sort-header").forEach(function (button) {
     button.addEventListener("click", function () {
       const key = button.getAttribute("data-sort-key");
@@ -201,12 +360,14 @@
       }
 
       updateSortHeaders();
+      currentPage = 1;
       renderTable();
     });
   });
 
   function renderAll() {
     renderStats();
+    renderTodaysAppointments();
     renderTable();
   }
 

@@ -22,8 +22,8 @@
       showError("Username must be at least 3 characters.");
       return;
     }
-    if (password.length < 4) {
-      showError("Password must be at least 4 characters.");
+    if (password.length < 4 || password.length > 100) {
+      showError("Password must be between 4 and 100 characters.");
       return;
     }
     if (password !== confirmPassword) {

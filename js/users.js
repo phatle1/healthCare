@@ -22,6 +22,9 @@ function isValidCredential(username, password) {
 }
 
 function registerUser(username, password) {
+  if (password.length < 4 || password.length > 100) {
+    return { ok: false, error: "Password must be between 4 and 100 characters." };
+  }
   if (findUser(username)) {
     return { ok: false, error: "Username already exists." };
   }
